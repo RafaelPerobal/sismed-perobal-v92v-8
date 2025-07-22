@@ -27,6 +27,7 @@ const PrescriptionForm = ({ patientId, onSuccess }: PrescriptionFormProps) => {
     isSubmitting,
     addMedicine,
     removeMedicine,
+    updateMedicinePosologia,
     generatePrescriptions
   } = usePrescriptionForm(patientId);
 
@@ -63,7 +64,9 @@ const PrescriptionForm = ({ patientId, onSuccess }: PrescriptionFormProps) => {
         <Tabs defaultValue="add" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="add">Adicionar Medicamentos</TabsTrigger>
-            <TabsTrigger value="list">Medicamentos Adicionados</TabsTrigger>
+            <TabsTrigger value="list">
+              Medicamentos Adicionados {selectedMedicines.length > 0 && `(${selectedMedicines.length})`}
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="add" className="space-y-4">
@@ -79,20 +82,24 @@ const PrescriptionForm = ({ patientId, onSuccess }: PrescriptionFormProps) => {
             <MedicineList
               selectedMedicines={selectedMedicines}
               onRemoveMedicine={removeMedicine}
+              onUpdatePosologia={updateMedicinePosologia}
             />
           </TabsContent>
         </Tabs>
 
         <div className="space-y-2">
-          <Label htmlFor="observacoes">Observações</Label>
+          <Label htmlFor="observacoes">Observações (Opcional)</Label>
           <Textarea
             id="observacoes"
             name="observacoes"
-            placeholder="Observações adicionais para a receita"
+            placeholder="Observações adicionais para a receita (campo opcional)"
             value={observations}
             onChange={(e) => setObservations(e.target.value)}
             rows={3}
           />
+          <p className="text-xs text-muted-foreground">
+            Campo opcional - pode ser deixado vazio
+          </p>
         </div>
         
         <div className="flex justify-end">

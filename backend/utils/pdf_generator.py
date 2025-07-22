@@ -1,7 +1,7 @@
 
 """
 Gerador de PDF para receitas médicas
-Layout baseado no modelo oficial de Perobal
+Layout oficial da Prefeitura de Perobal - Nova versão v9.0
 """
 
 from reportlab.lib.pagesizes import A4
@@ -18,7 +18,7 @@ from config import Config
 
 def generate_prescription_pdf(prescription):
     """
-    Gera PDF da receita médica seguindo o modelo oficial
+    Gera PDF da receita médica seguindo o novo modelo oficial v9.0
     """
     buffer = BytesIO()
     
@@ -35,21 +35,31 @@ def generate_prescription_pdf(prescription):
     # Estilos
     styles = getSampleStyleSheet()
     
-    # Estilo personalizado para cabeçalho
-    header_style = ParagraphStyle(
-        'CustomHeader',
+    # Estilo personalizado para cabeçalho principal
+    header_main_style = ParagraphStyle(
+        'HeaderMain',
+        parent=styles['Normal'],
+        fontSize=16,
+        fontName='Helvetica-Bold',
+        alignment=TA_CENTER,
+        spaceAfter=8
+    )
+    
+    # Estilo para subtítulo do cabeçalho
+    header_sub_style = ParagraphStyle(
+        'HeaderSub',
         parent=styles['Normal'],
         fontSize=14,
         fontName='Helvetica-Bold',
         alignment=TA_CENTER,
-        spaceAfter=10
+        spaceAfter=6
     )
     
-    # Estilo para título
+    # Estilo para título da receita
     title_style = ParagraphStyle(
-        'CustomTitle',
+        'Title',
         parent=styles['Normal'],
-        fontSize=18,
+        fontSize=20,
         fontName='Helvetica-Bold',
         alignment=TA_CENTER,
         spaceAfter=20
@@ -59,7 +69,7 @@ def generate_prescription_pdf(prescription):
     patient_style = ParagraphStyle(
         'PatientStyle',
         parent=styles['Normal'],
-        fontSize=11,
+        fontSize=12,
         fontName='Helvetica',
         spaceAfter=6
     )
@@ -77,24 +87,25 @@ def generate_prescription_pdf(prescription):
     # Conteúdo do PDF
     story = []
     
-    # Cabeçalho com logo (se existir)
-    logo_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'logo_perobal.png')
+    # NOVO CABEÇALHO OFICIAL v9.0
+    # Logo da Prefeitura (centralizada)
+    logo_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'logo_perobal_oficial.png')
     if os.path.exists(logo_path):
         try:
-            logo = Image(logo_path, width=6*cm, height=3*cm)
+            logo = Image(logo_path, width=4*cm, height=4*cm)
             logo.hAlign = 'CENTER'
             story.append(logo)
-            story.append(Spacer(1, 0.5*cm))
+            story.append(Spacer(1, 0.3*cm))
         except:
-            pass  # Se não conseguir carregar a logo, continua sem ela
+            print("Aviso: Logo não encontrada, continuando sem imagem")
     
-    # Cabeçalho texto
-    story.append(Paragraph("PREFEITURA MUNICIPAL DE PEROBAL", header_style))
-    story.append(Paragraph("SECRETARIA MUNICIPAL DE SAÚDE", header_style))
+    # Cabeçalho texto conforme nova especificação
+    story.append(Paragraph("PREFEITURA DE PEROBAL", header_main_style))
+    story.append(Paragraph("SECRETARIA MUNICIPAL DE SAÚDE", header_sub_style))
     story.append(Spacer(1, 0.5*cm))
     
-    # Título
-    story.append(Paragraph("RECEITUÁRIO MÉDICO", title_style))
+    # Título principal
+    story.append(Paragraph("RECEITA MÉDICA", title_style))
     story.append(Spacer(1, 1*cm))
     
     # Dados do paciente em tabela
@@ -134,12 +145,15 @@ def generate_prescription_pdf(prescription):
             medicine_text = f"{i}. <b>{medicine.denominacao_generica} - {medicine.concentracao} ({medicine.apresentacao})</b>"
             story.append(Paragraph(medicine_text, medicine_style))
             
-            posology_text = f"   {med_data['posologia']}"
-            story.append(Paragraph(posology_text, medicine_style))
+            # Posologia apenas se não estiver vazia
+            if med_data.get('posologia') and med_data['posologia'].strip():
+                posology_text = f"   {med_data['posologia']}"
+                story.append(Paragraph(posology_text, medicine_style))
+            
             story.append(Spacer(1, 0.3*cm))
     
-    # Observações se houver
-    if prescription.observacoes:
+    # Observações apenas se houver
+    if prescription.observacoes and prescription.observacoes.strip():
         story.append(Spacer(1, 0.5*cm))
         story.append(Paragraph("<b>OBSERVAÇÕES:</b>", patient_style))
         story.append(Paragraph(prescription.observacoes, patient_style))
@@ -167,7 +181,7 @@ def generate_prescription_pdf(prescription):
     
     story.append(signature_table)
     
-    # Rodapé
+    # Rodapé oficial
     story.append(Spacer(1, 1*cm))
     footer_style = ParagraphStyle(
         'Footer',
@@ -176,7 +190,7 @@ def generate_prescription_pdf(prescription):
         fontName='Helvetica',
         alignment=TA_CENTER
     )
-    story.append(Paragraph(Config.ORG_ADDRESS, footer_style))
+    story.append(Paragraph("Rua Jaracatiá, 1060 - Telefax (044)3625-1225 - CEP. 87538-000 - PEROBAL - PARANÁ", footer_style))
     
     # Construir PDF
     doc.build(story)

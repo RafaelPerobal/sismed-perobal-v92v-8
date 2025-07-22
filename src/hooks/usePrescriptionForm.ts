@@ -32,6 +32,14 @@ export const usePrescriptionForm = (patientId?: number) => {
     setSelectedMedicines(prev => prev.filter((_, i) => i !== index));
   };
 
+  const updateMedicinePosologia = (index: number, posologia: string) => {
+    setSelectedMedicines(prev => 
+      prev.map((med, i) => 
+        i === index ? { ...med, posologia } : med
+      )
+    );
+  };
+
   const generatePrescriptions = async (onSuccess?: () => void) => {
     if (!patientId) {
       toast({
@@ -67,8 +75,8 @@ export const usePrescriptionForm = (patientId?: number) => {
     try {
       await generateMultiplePrescriptions({
         pacienteId: patientId,
-        medicamentos: selectedMedicines,
-        observacoes: observations,
+        medicamentos: selectedMedicines, // Medicamentos com posologias opcionais
+        observacoes: observations.trim() || '', // Observações opcionais
         datas: prescriptionDates
       });
       
@@ -108,6 +116,7 @@ export const usePrescriptionForm = (patientId?: number) => {
     isSubmitting,
     addMedicine,
     removeMedicine,
+    updateMedicinePosologia,
     generatePrescriptions,
     resetForm
   };

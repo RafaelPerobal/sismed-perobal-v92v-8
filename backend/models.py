@@ -70,7 +70,7 @@ class Medicine(db.Model):
         }
 
 class Prescription(db.Model):
-    """Modelo de Receita Médica"""
+    """Modelo de Receita Médica - Campos opcionais flexíveis"""
     __tablename__ = 'prescriptions'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -78,14 +78,16 @@ class Prescription(db.Model):
     patient_id = db.Column(db.Integer, db.ForeignKey('patients.id'), nullable=False)
     data = db.Column(db.Date, nullable=False, default=datetime.utcnow().date)
     data_vencimento = db.Column(db.Date, nullable=True)
-    medicamentos_json = db.Column(db.Text, nullable=False)  # JSON dos medicamentos e posologias
-    observacoes = db.Column(db.Text, nullable=True)
+    medicamentos_json = db.Column(db.Text, nullable=False)  # JSON dos medicamentos
+    observacoes = db.Column(db.Text, nullable=True)  # OPCIONAL - pode estar vazio
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def __init__(self, **kwargs):
-        # Padronizar observações
-        if 'observacoes' in kwargs and kwargs['observacoes']:
+        # Padronizar observações apenas se não estiver vazio
+        if 'observacoes' in kwargs and kwargs['observacoes'] and kwargs['observacoes'].strip():
             kwargs['observacoes'] = format_text_field(kwargs['observacoes'])
+        elif 'observacoes' in kwargs and not kwargs['observacoes']:
+            kwargs['observacoes'] = None  # Garantir que vazio seja None
         
         super().__init__(**kwargs)
     
@@ -104,6 +106,6 @@ class Prescription(db.Model):
             'data': self.data.isoformat(),
             'dataVencimento': self.data_vencimento.isoformat() if self.data_vencimento else None,
             'medicamentos': self.get_medicamentos(),
-            'observacoes': self.observacoes,
+            'observacoes': self.observacoes if self.observacoes else '',  # Retornar string vazia se None
             'created_at': self.created_at.isoformat()
         }

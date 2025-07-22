@@ -3,8 +3,9 @@ import { useState } from 'react';
 import { Medicine, PrescriptionMedicine } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -13,7 +14,7 @@ import {
   TableHeader,
   TableRow
 } from "@/components/ui/table";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, X } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 
 interface MedicineSelectorProps {
@@ -31,34 +32,64 @@ const MedicineSelector = ({
 }: MedicineSelectorProps) => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedMedicine, setSelectedMedicine] = useState<number | null>(null);
-  const [posologia, setPosologia] = useState("");
+  const [selectedMedicineIds, setSelectedMedicineIds] = useState<Set<number>>(new Set());
 
   // Filtrar medicamentos com a pesquisa
   const filteredMedicines = medicines.filter(med => 
-    med.nome.toLowerCase().includes(searchTerm.toLowerCase())
+    med.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    med.dosagem.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    med.apresentacao.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddMedicine = () => {
-    if (!selectedMedicine || !posologia) {
+  const handleMedicineToggle = (medicineId: number) => {
+    const newSelected = new Set(selectedMedicineIds);
+    if (newSelected.has(medicineId)) {
+      newSelected.delete(medicineId);
+    } else {
+      newSelected.add(medicineId);
+    }
+    setSelectedMedicineIds(newSelected);
+  };
+
+  const handleAddSelectedMedicines = () => {
+    if (selectedMedicineIds.size === 0) {
       toast({
-        title: "Campos obrigatórios",
-        description: "Selecione um medicamento e informe a posologia",
+        title: "Nenhum medicamento selecionado",
+        description: "Selecione pelo menos um medicamento para adicionar",
         variant: "destructive"
       });
       return;
     }
 
-    const newMedication: PrescriptionMedicine = {
-      medicamentoId: selectedMedicine,
-      posologia: posologia
-    };
+    // Adicionar todos os medicamentos selecionados
+    selectedMedicineIds.forEach(medicineId => {
+      const newMedication: PrescriptionMedicine = {
+        medicamentoId: medicineId,
+        posologia: "" // Posologia será preenchida na próxima etapa (opcional)
+      };
+      onAddMedicine(newMedication);
+    });
 
-    onAddMedicine(newMedication);
+    // Limpar seleção
+    setSelectedMedicineIds(new Set());
+    
+    toast({
+      title: "Medicamentos adicionados",
+      description: `${selectedMedicineIds.size} medicamento(s) adicionado(s) à receita`,
+    });
+  };
 
-    // Limpar os campos
-    setSelectedMedicine(null);
-    setPosologia("");
+  const removeMedicineFromSelection = (medicineId: number) => {
+    const newSelected = new Set(selectedMedicineIds);
+    newSelected.delete(medicineId);
+    setSelectedMedicineIds(newSelected);
+  };
+
+  // Obter informações dos medicamentos selecionados
+  const getSelectedMedicinesInfo = () => {
+    return Array.from(selectedMedicineIds).map(id => 
+      medicines.find(med => med.id === id)
+    ).filter(Boolean);
   };
 
   return (
@@ -66,20 +97,42 @@ const MedicineSelector = ({
       <div className="flex items-center space-x-2">
         <Search className="h-5 w-5 text-gray-400" />
         <Input
-          placeholder="Buscar medicamento"
+          placeholder="Buscar por nome, dosagem ou apresentação"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
+
+      {/* Medicamentos Selecionados */}
+      {selectedMedicineIds.size > 0 && (
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Medicamentos Selecionados ({selectedMedicineIds.size})</Label>
+          <div className="flex flex-wrap gap-2">
+            {getSelectedMedicinesInfo().map((med) => (
+              <Badge key={med?.id} variant="secondary" className="flex items-center gap-1">
+                <span className="text-xs">
+                  {med?.nome} - {med?.dosagem}
+                </span>
+                <button
+                  onClick={() => removeMedicineFromSelection(med?.id || 0)}
+                  className="ml-1 hover:text-red-500"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
       
       <div className="border rounded-md max-h-60 overflow-y-auto">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12"></TableHead>
               <TableHead>Nome</TableHead>
               <TableHead>Dosagem</TableHead>
               <TableHead>Apresentação</TableHead>
-              <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -97,20 +150,16 @@ const MedicineSelector = ({
               </TableRow>
             ) : (
               filteredMedicines.map((med) => (
-                <TableRow key={med.id} className={med.id === selectedMedicine ? "bg-health-100" : ""}>
-                  <TableCell>{med.nome}</TableCell>
+                <TableRow key={med.id} className={selectedMedicineIds.has(med.id) ? "bg-health-50" : ""}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedMedicineIds.has(med.id)}
+                      onCheckedChange={() => handleMedicineToggle(med.id)}
+                    />
+                  </TableCell>
+                  <TableCell className="font-medium">{med.nome}</TableCell>
                   <TableCell>{med.dosagem}</TableCell>
                   <TableCell>{med.apresentacao}</TableCell>
-                  <TableCell>
-                    <Button
-                      type="button"
-                      variant={med.id === selectedMedicine ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSelectedMedicine(med.id === selectedMedicine ? null : med.id)}
-                    >
-                      {med.id === selectedMedicine ? "Selecionado" : "Selecionar"}
-                    </Button>
-                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -118,25 +167,14 @@ const MedicineSelector = ({
         </Table>
       </div>
       
-      <div className="space-y-2">
-        <Label htmlFor="posologia">Posologia</Label>
-        <Textarea
-          id="posologia"
-          value={posologia}
-          onChange={(e) => setPosologia(e.target.value)}
-          placeholder="Ex: Tomar 1 comprimido a cada 8 horas por 7 dias"
-          rows={2}
-        />
-      </div>
-      
       <Button
         type="button"
-        onClick={handleAddMedicine}
+        onClick={handleAddSelectedMedicines}
         className="w-full bg-health-600 hover:bg-health-700"
-        disabled={!selectedMedicine || !posologia}
+        disabled={selectedMedicineIds.size === 0}
       >
         <Plus className="mr-2 h-4 w-4" />
-        Adicionar Medicamento à Receita
+        Adicionar {selectedMedicineIds.size} Medicamento(s) à Receita
       </Button>
     </div>
   );

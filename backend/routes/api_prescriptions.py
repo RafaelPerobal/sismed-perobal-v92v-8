@@ -1,6 +1,6 @@
 
 """
-API Routes para Receitas Médicas
+API Routes para Receitas Médicas - Campos opcionais flexíveis
 """
 
 from flask import Blueprint, request
@@ -43,7 +43,7 @@ def get_prescription(prescription_id):
 
 @prescriptions_bp.route('', methods=['POST'])
 def create_prescription():
-    """Criar nova receita"""
+    """Criar nova receita - Campos opcionais flexíveis"""
     try:
         data = request.get_json()
         
@@ -59,20 +59,25 @@ def create_prescription():
         if not patient:
             return error_response("Paciente não encontrado")
         
-        # Validar medicamentos
+        # Validar medicamentos - POSOLOGIA AGORA É OPCIONAL
         medicamentos_list = []
         for med_data in data['medicamentos']:
-            if not med_data.get('medicamentoId') or not med_data.get('posologia'):
-                return error_response("Medicamento e posologia são obrigatórios")
+            if not med_data.get('medicamentoId'):
+                return error_response("ID do medicamento é obrigatório")
             
             # Verificar se o medicamento existe (por public_id)
             medicine = Medicine.query.filter_by(public_id=med_data['medicamentoId']).first()
             if not medicine:
                 return error_response(f"Medicamento {med_data['medicamentoId']} não encontrado")
             
+            # Posologia é opcional - pode estar vazia
+            posologia = med_data.get('posologia', '').strip()
+            if posologia:
+                posologia = posologia.upper()
+            
             medicamentos_list.append({
                 'medicamentoId': med_data['medicamentoId'],
-                'posologia': med_data['posologia'].upper().strip()
+                'posologia': posologia  # Pode ser string vazia
             })
         
         # Preparar data
@@ -83,11 +88,16 @@ def create_prescription():
             except ValueError:
                 return error_response("Data inválida")
         
+        # Observações opcionais
+        observacoes = data.get('observacoes', '').strip()
+        if not observacoes:
+            observacoes = None  # Salvar como None se vazio
+        
         # Criar receita
         prescription = Prescription(
             patient_id=patient.id,
             data=prescription_date,
-            observacoes=data.get('observacoes', ''),
+            observacoes=observacoes,
             medicamentos_json=json.dumps(medicamentos_list)
         )
         

@@ -2,6 +2,8 @@
 import { Medicine, PrescriptionMedicine } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
   Table,
   TableBody,
@@ -16,17 +18,29 @@ import { getMedicineByIdSync } from '@/utils/storage';
 interface MedicineListProps {
   selectedMedicines: PrescriptionMedicine[];
   onRemoveMedicine: (index: number) => void;
+  onUpdatePosologia?: (index: number, posologia: string) => void;
 }
 
-const MedicineList = ({ selectedMedicines, onRemoveMedicine }: MedicineListProps) => {
+const MedicineList = ({ 
+  selectedMedicines, 
+  onRemoveMedicine, 
+  onUpdatePosologia 
+}: MedicineListProps) => {
   const getMedicineInfo = (id: number): Medicine | undefined => {
     return getMedicineByIdSync(id);
+  };
+
+  const handlePosologiaChange = (index: number, value: string) => {
+    if (onUpdatePosologia) {
+      onUpdatePosologia(index, value);
+    }
   };
 
   if (selectedMedicines.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        Nenhum medicamento adicionado à receita
+        <p>Nenhum medicamento adicionado à receita</p>
+        <p className="text-sm mt-2">Use a aba "Adicionar Medicamentos" para selecionar medicamentos</p>
       </div>
     );
   }
@@ -38,7 +52,7 @@ const MedicineList = ({ selectedMedicines, onRemoveMedicine }: MedicineListProps
           <TableHeader>
             <TableRow>
               <TableHead>Medicamento</TableHead>
-              <TableHead>Posologia</TableHead>
+              <TableHead>Posologia (Opcional)</TableHead>
               <TableHead className="w-16"></TableHead>
             </TableRow>
           </TableHeader>
@@ -55,7 +69,18 @@ const MedicineList = ({ selectedMedicines, onRemoveMedicine }: MedicineListProps
                       </p>
                     </div>
                   </TableCell>
-                  <TableCell>{med.posologia}</TableCell>
+                  <TableCell className="min-w-[300px]">
+                    <Textarea
+                      placeholder="Ex: Tomar 1 comprimido a cada 8 horas (opcional)"
+                      value={med.posologia || ''}
+                      onChange={(e) => handlePosologiaChange(index, e.target.value)}
+                      rows={2}
+                      className="resize-none"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Campo opcional - pode ser deixado vazio
+                    </p>
+                  </TableCell>
                   <TableCell>
                     <Button
                       type="button"
@@ -74,10 +99,13 @@ const MedicineList = ({ selectedMedicines, onRemoveMedicine }: MedicineListProps
         </Table>
       </div>
       
-      <div>
+      <div className="flex justify-between items-center">
         <Badge variant="secondary" className="mr-2">
           Total: {selectedMedicines.length} medicamentos
         </Badge>
+        <p className="text-sm text-muted-foreground">
+          Posologias podem ser preenchidas posteriormente ou deixadas vazias
+        </p>
       </div>
     </div>
   );

@@ -46,6 +46,12 @@ if errorlevel 1 (
     exit /b 1
 )
 
+echo 🧹 Executando limpeza automática de receitas...
+python limpar_receitas.py
+if errorlevel 1 (
+    echo ⚠️  Aviso: Erro na limpeza, continuando...
+)
+
 echo 🌱 Inicializando banco de dados...
 python seed.py
 if errorlevel 1 (
