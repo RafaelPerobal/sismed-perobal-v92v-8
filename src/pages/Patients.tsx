@@ -29,7 +29,7 @@ const Patients = () => {
     setEditingPatient(null);
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     if (window.confirm('Tem certeza que deseja excluir este paciente?')) {
       deletePatient(id);
     }
@@ -83,8 +83,12 @@ const Patients = () => {
               ) : (
                 <PatientTable 
                   patients={patients}
-                  onEdit={handleEditPatient}
+                  onEdit={(id) => {
+                    const patient = patients.find(p => p.id === id);
+                    if (patient) handleEditPatient(patient);
+                  }}
                   onDelete={handleDelete}
+                  onGeneratePrescription={() => {}}
                 />
               )}
             </CardContent>

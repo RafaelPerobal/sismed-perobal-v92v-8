@@ -28,7 +28,7 @@ const Medicines = () => {
     setActiveTab('form');
   };
   
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     if (confirm("Tem certeza que deseja excluir este medicamento?")) {
       deleteMedicine(id);
     }

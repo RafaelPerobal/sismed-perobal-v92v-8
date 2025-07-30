@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Patient, Prescription } from '@/types';
 import { usePatients } from '@/hooks/usePatients';
 import { usePrescriptions } from '@/hooks/usePrescriptions';
-import { getPatientByIdSync, getPrescriptionByIdSync } from '@/utils/storage';
+import { patientsApi } from '@/services/apiService';
 import { FileText, Search } from 'lucide-react';
 
 const Prescriptions = () => {
@@ -31,15 +31,21 @@ const Prescriptions = () => {
   } = usePrescriptions();
   
   useEffect(() => {
-    if (patientIdParam) {
-      const patientId = parseInt(patientIdParam);
-      const patient = getPatientByIdSync(patientId);
-      
-      if (patient) {
-        setSelectedPatient(patient);
-        setActiveTab('list');
+    const loadPatient = async () => {
+      if (patientIdParam) {
+        try {
+          const patient = await patientsApi.getById(patientIdParam);
+          if (patient) {
+            setSelectedPatient(patient);
+            setActiveTab('list');
+          }
+        } catch (error) {
+          console.error('Erro ao carregar paciente:', error);
+        }
       }
-    }
+    };
+    
+    loadPatient();
   }, [patientIdParam]);
   
   const handleSelectPatient = (patient: Patient) => {
@@ -60,7 +66,7 @@ const Prescriptions = () => {
     setActiveTab('view');
   };
   
-  const handleDeletePrescription = (id: number) => {
+  const handleDeletePrescription = (id: string) => {
     if (confirm("Tem certeza que deseja excluir esta receita?")) {
       deletePrescription(id);
     }
@@ -168,11 +174,10 @@ const Prescriptions = () => {
             {selectedPatient && (
               <PrescriptionListCard
                 patient={selectedPatient}
-                prescriptions={prescriptions}
                 onNewPrescription={() => setActiveTab('new')}
                 onViewPrescription={handleViewPrescription}
                 onDeletePrescription={handleDeletePrescription}
-                isLoading={isPrescriptionsLoading}
+                onBack={handleBackToSearch}
               />
             )}
           </TabsContent>

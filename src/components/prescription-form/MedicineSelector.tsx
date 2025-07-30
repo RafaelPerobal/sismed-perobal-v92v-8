@@ -32,7 +32,7 @@ const MedicineSelector = ({
 }: MedicineSelectorProps) => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedMedicineIds, setSelectedMedicineIds] = useState<Set<number>>(new Set());
+  const [selectedMedicineIds, setSelectedMedicineIds] = useState<Set<string>>(new Set());
 
   // Filtrar medicamentos com a pesquisa
   const filteredMedicines = medicines.filter(med => 
@@ -41,7 +41,7 @@ const MedicineSelector = ({
     med.apresentacao.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleMedicineToggle = (medicineId: number) => {
+  const handleMedicineToggle = (medicineId: string) => {
     const newSelected = new Set(selectedMedicineIds);
     if (newSelected.has(medicineId)) {
       newSelected.delete(medicineId);
@@ -79,7 +79,7 @@ const MedicineSelector = ({
     });
   };
 
-  const removeMedicineFromSelection = (medicineId: number) => {
+  const removeMedicineFromSelection = (medicineId: string) => {
     const newSelected = new Set(selectedMedicineIds);
     newSelected.delete(medicineId);
     setSelectedMedicineIds(newSelected);
@@ -114,7 +114,7 @@ const MedicineSelector = ({
                   {med?.nome} - {med?.dosagem}
                 </span>
                 <button
-                  onClick={() => removeMedicineFromSelection(med?.id || 0)}
+                  onClick={() => removeMedicineFromSelection(med?.id || "")}
                   className="ml-1 hover:text-red-500"
                 >
                   <X className="h-3 w-3" />

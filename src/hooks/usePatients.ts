@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Patient } from '@/types';
-import { getPatients, addPatient, updatePatient, deletePatient } from '@/utils/storage';
+import { patientsApi } from '@/services/apiService';
 import { useToast } from '@/hooks/use-toast';
 
 export const usePatients = () => {
@@ -11,11 +11,11 @@ export const usePatients = () => {
 
   const { data: patients = [], isLoading, error } = useQuery({
     queryKey: ['patients'],
-    queryFn: getPatients,
+    queryFn: patientsApi.getAll,
   });
 
   const addPatientMutation = useMutation({
-    mutationFn: addPatient,
+    mutationFn: patientsApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['patients'] });
       toast({
@@ -33,7 +33,7 @@ export const usePatients = () => {
   });
 
   const updatePatientMutation = useMutation({
-    mutationFn: updatePatient,
+    mutationFn: (data: Patient) => patientsApi.update(data.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['patients'] });
       toast({
@@ -51,7 +51,7 @@ export const usePatients = () => {
   });
 
   const deletePatientMutation = useMutation({
-    mutationFn: deletePatient,
+    mutationFn: patientsApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['patients'] });
       toast({

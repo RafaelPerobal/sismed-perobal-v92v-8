@@ -1,7 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Prescription, MultiplePrescriptionsData } from '@/types';
-import { getPrescriptions, addPrescription, deletePrescription } from '@/utils/storage';
+import { prescriptionsApi } from '@/services/apiService';
 import { useToast } from '@/hooks/use-toast';
 
 export const usePrescriptions = () => {
@@ -10,11 +10,11 @@ export const usePrescriptions = () => {
 
   const { data: prescriptions = [], isLoading, error } = useQuery({
     queryKey: ['prescriptions'],
-    queryFn: getPrescriptions,
+    queryFn: () => prescriptionsApi.getAll(),
   });
 
   const addPrescriptionMutation = useMutation({
-    mutationFn: addPrescription,
+    mutationFn: prescriptionsApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['prescriptions'] });
       toast({
@@ -32,7 +32,7 @@ export const usePrescriptions = () => {
   });
 
   const deletePrescriptionMutation = useMutation({
-    mutationFn: deletePrescription,
+    mutationFn: prescriptionsApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['prescriptions'] });
       toast({
@@ -49,31 +49,19 @@ export const usePrescriptions = () => {
     }
   });
 
-  // Função para gerar múltiplas receitas (preparada para integração com backend)
+  // Função para gerar múltiplas receitas usando a API
   const generateMultiplePrescriptions = async (data: MultiplePrescriptionsData) => {
     try {
-      // Gerar receitas individuais para cada data habilitada
-      const enabledDates = data.datas.filter(d => d.enabled);
-      
-      for (const dateConfig of enabledDates) {
-        const prescriptionData = {
-          pacienteId: data.pacienteId,
-          data: dateConfig.date,
-          medicamentos: data.medicamentos,
-          observacoes: data.observacoes,
-        };
-        
-        await addPrescription(prescriptionData);
-      }
+      const prescriptions = await prescriptionsApi.createMultiple(data);
       
       toast({
-        title: `${enabledDates.length} receitas geradas`,
-        description: `Foram geradas ${enabledDates.length} receitas com sucesso`,
+        title: `${prescriptions.length} receitas geradas`,
+        description: `Foram geradas ${prescriptions.length} receitas com sucesso`,
       });
       
       queryClient.invalidateQueries({ queryKey: ['prescriptions'] });
       
-      return { success: true, count: enabledDates.length };
+      return { success: true, count: prescriptions.length };
     } catch (error) {
       toast({
         title: "Erro",

@@ -11,7 +11,7 @@ import MedicineSelector from './prescription-form/MedicineSelector';
 import MedicineList from './prescription-form/MedicineList';
 
 interface PrescriptionFormProps {
-  patientId?: number;
+  patientId?: string;
   onSuccess?: () => void;
 }
 

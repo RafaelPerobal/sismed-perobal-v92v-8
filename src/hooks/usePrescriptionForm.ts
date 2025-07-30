@@ -1,11 +1,11 @@
 
 import { useState, useEffect } from 'react';
 import { Patient, PrescriptionMedicine, PrescriptionDateConfig } from '@/types';
-import { getPatientByIdSync } from '@/utils/storage';
+import { patientsApi } from '@/services/apiService';
 import { usePrescriptions } from './usePrescriptions';
 import { useToast } from './use-toast';
 
-export const usePrescriptionForm = (patientId?: number) => {
+export const usePrescriptionForm = (patientId?: string) => {
   const { toast } = useToast();
   const { generateMultiplePrescriptions } = usePrescriptions();
   
@@ -18,10 +18,19 @@ export const usePrescriptionForm = (patientId?: number) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (patientId) {
-      const patientData = getPatientByIdSync(patientId);
-      setPatient(patientData || null);
-    }
+    const loadPatient = async () => {
+      if (patientId) {
+        try {
+          const patientData = await patientsApi.getById(patientId);
+          setPatient(patientData || null);
+        } catch (error) {
+          console.error('Erro ao carregar paciente:', error);
+          setPatient(null);
+        }
+      }
+    };
+
+    loadPatient();
   }, [patientId]);
 
   const addMedicine = (medicine: PrescriptionMedicine) => {
@@ -32,7 +41,7 @@ export const usePrescriptionForm = (patientId?: number) => {
     setSelectedMedicines(prev => prev.filter((_, i) => i !== index));
   };
 
-  const updateMedicinePosologia = (index: number, posologia: string) => {
+  const updateMedicinePosologia = (index: number, posologia?: string) => {
     setSelectedMedicines(prev => 
       prev.map((med, i) => 
         i === index ? { ...med, posologia } : med

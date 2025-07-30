@@ -14,49 +14,52 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { MoreHorizontal, File, Edit, Trash2, Search } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { MoreHorizontal, Edit, Trash2, File, Search } from "lucide-react";
+import { formatCpf } from "@/lib/utils";
 
 interface PatientTableProps {
   patients: Patient[];
-  onEdit: (patient: Patient) => void;
-  onDelete: (id: number) => void;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
+  onGeneratePrescription: (patientId: string) => void;
+}
+
+interface ExtendedPatientTableProps extends PatientTableProps {
   onPrescription?: (patient: Patient) => void;
 }
 
 const PatientTable = ({ 
   patients, 
   onEdit, 
-  onDelete,
-  onPrescription
-}: PatientTableProps) => {
+  onDelete, 
+  onGeneratePrescription,
+  onPrescription 
+}: ExtendedPatientTableProps) => {
   const [searchTerm, setSearchTerm] = useState("");
-  
-  const filteredPatients = patients.filter(
-    (patient) => 
-      patient.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.cpf.includes(searchTerm)
+
+  const filteredPatients = patients.filter(patient =>
+    patient.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.cpf.includes(searchTerm)
   );
 
-  // Função para formatar a data
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return "";
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('pt-BR');
+  const handleEdit = (id: string) => {
+    onEdit(id);
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center space-x-2">
-        <Search className="h-5 w-5 text-gray-400" />
-        <Input
-          placeholder="Buscar por nome ou CPF"
+        <Search className="h-4 w-4 text-gray-500" />
+        <input
+          type="text"
+          placeholder="Buscar paciente por nome ou CPF..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
+          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
@@ -64,29 +67,41 @@ const PatientTable = ({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>CPF</TableHead>
               <TableHead>Nome</TableHead>
-              <TableHead className="hidden md:table-cell">Dt Nascimento</TableHead>
+              <TableHead>CPF</TableHead>
+              <TableHead>Data de Nascimento</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredPatients.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
-                  Nenhum paciente encontrado
+                <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                  {searchTerm ? "Nenhum paciente encontrado" : "Nenhum paciente cadastrado"}
                 </TableCell>
               </TableRow>
             ) : (
               filteredPatients.map((patient) => (
                 <TableRow key={patient.id}>
-                  <TableCell>{patient.cpf}</TableCell>
                   <TableCell className="font-medium">{patient.nome}</TableCell>
-                  <TableCell className="hidden md:table-cell">{formatDate(patient.dataNascimento)}</TableCell>
+                  <TableCell>
+                    {patient.cpf ? (
+                      <Badge variant="outline">{formatCpf(patient.cpf)}</Badge>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">Não informado</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {patient.dataNascimento ? (
+                      new Date(patient.dataNascimento).toLocaleDateString()
+                    ) : (
+                      <span className="text-muted-foreground text-sm">Não informado</span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <Button variant="ghost" className="h-8 w-8 p-0">
                           <span className="sr-only">Abrir menu</span>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
@@ -94,7 +109,7 @@ const PatientTable = ({
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Ações</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => onEdit(patient)}>
+                        <DropdownMenuItem onClick={() => onEdit(patient.id)}>
                           <Edit className="mr-2 h-4 w-4" />
                           <span>Editar</span>
                         </DropdownMenuItem>

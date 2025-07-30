@@ -13,7 +13,7 @@ import {
   TableRow
 } from "@/components/ui/table";
 import { Trash2 } from "lucide-react";
-import { getMedicineByIdSync } from '@/utils/storage';
+import { useMedicineContext } from '@/hooks/useMedicineContext';
 
 interface MedicineListProps {
   selectedMedicines: PrescriptionMedicine[];
@@ -26,11 +26,13 @@ const MedicineList = ({
   onRemoveMedicine, 
   onUpdatePosologia 
 }: MedicineListProps) => {
-  const getMedicineInfo = (id: number): Medicine | undefined => {
-    return getMedicineByIdSync(id);
+  const { getMedicineById } = useMedicineContext();
+
+  const getMedicineInfo = (id: string): Medicine | undefined => {
+    return getMedicineById(id);
   };
 
-  const handlePosologiaChange = (index: number, value: string) => {
+  const handlePosologiaChange = (index: number, value?: string) => {
     if (onUpdatePosologia) {
       onUpdatePosologia(index, value);
     }

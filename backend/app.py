@@ -15,6 +15,7 @@ from database import db
 from routes.api_patients import patients_bp
 from routes.api_medicines import medicines_bp
 from routes.api_prescriptions import prescriptions_bp
+from routes.api_prescriptions_multiple import multiple_prescriptions_bp
 from routes.api_pdf import pdf_bp
 
 def create_app():
@@ -27,11 +28,12 @@ def create_app():
     # Inicializar banco de dados
     db.init_app(app)
     
-    # Registrar blueprints da API
-    app.register_blueprint(patients_bp, url_prefix='/api/patients')
-    app.register_blueprint(medicines_bp, url_prefix='/api/medicines')
-    app.register_blueprint(prescriptions_bp, url_prefix='/api/prescriptions')
-    app.register_blueprint(pdf_bp, url_prefix='/api/pdf')
+    # Registrar blueprints
+    app.register_blueprint(patients_bp, url_prefix='/api')
+    app.register_blueprint(medicines_bp, url_prefix='/api')
+    app.register_blueprint(prescriptions_bp, url_prefix='/api')
+    app.register_blueprint(multiple_prescriptions_bp, url_prefix='/api')
+    app.register_blueprint(pdf_bp, url_prefix='/api')
     
     # Servir o frontend React
     @app.route('/')
