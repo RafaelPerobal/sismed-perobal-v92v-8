@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { addMedicine, updateMedicine } from '@/utils/storage';
+import { useMedicines } from '@/hooks/useMedicines';
 import { Medicine } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +35,7 @@ const APRESENTACOES = [
 
 const MedicineForm = ({ initialData, onSuccess }: MedicineFormProps) => {
   const { toast } = useToast();
+  const { addMedicine, updateMedicine } = useMedicines();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState<Omit<Medicine, 'id'>>({

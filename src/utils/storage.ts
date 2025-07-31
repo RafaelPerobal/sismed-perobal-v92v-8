@@ -1,6 +1,6 @@
 /**
- * Camada de compatibilidade para migração da API
- * Redirecionamento das funções antigas para a nova API
+ * Camada de compatibilidade DEPRECATED - Use hooks específicos
+ * @deprecated Use usePatients, useMedicines, usePrescriptions hooks
  */
 
 import { patientsApi, medicinesApi, prescriptionsApi } from '@/services/apiService';

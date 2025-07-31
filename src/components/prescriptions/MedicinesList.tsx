@@ -1,12 +1,18 @@
 
 import { Prescription } from '@/types';
-import { getMedicineByIdSync } from '@/utils/storage';
+import { useMedicines } from '@/hooks/useMedicines';
 
 interface MedicinesListProps {
   prescription: Prescription;
 }
 
 const MedicinesList = ({ prescription }: MedicinesListProps) => {
+  const { medicines } = useMedicines();
+  
+  const getMedicineById = (id: string) => {
+    return medicines.find(m => m.id === id);
+  };
+  
   return (
     <>
       {/* Screen version */}
@@ -15,7 +21,7 @@ const MedicinesList = ({ prescription }: MedicinesListProps) => {
         
         <div className="space-y-4">
           {prescription.medicamentos.map((med, index) => {
-            const medicine = getMedicineByIdSync(med.medicamentoId);
+            const medicine = getMedicineById(med.medicamentoId);
             return (
               <div key={index} className="border-b pb-3">
                 <p className="font-medium">{medicine?.nome} - {medicine?.dosagem} ({medicine?.apresentacao})</p>
@@ -32,7 +38,7 @@ const MedicinesList = ({ prescription }: MedicinesListProps) => {
         
         <ol className="list-decimal pl-6 space-y-3">
           {prescription.medicamentos.map((med, index) => {
-            const medicine = getMedicineByIdSync(med.medicamentoId);
+            const medicine = getMedicineById(med.medicamentoId);
             return (
               <li key={index} className="mb-2">
                 <p className="font-medium">{medicine?.nome} {medicine?.dosagem} - {medicine?.apresentacao}</p>

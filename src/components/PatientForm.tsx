@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { addPatient, updatePatient } from '@/utils/storage';
+import { usePatients } from '@/hooks/usePatients';
 import { Patient } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,7 @@ interface PatientFormProps {
 
 const PatientForm = ({ initialData, onSuccess, onCancel }: PatientFormProps) => {
   const { toast } = useToast();
+  const { addPatient, updatePatient } = usePatients();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState<Omit<Patient, 'id'>>({

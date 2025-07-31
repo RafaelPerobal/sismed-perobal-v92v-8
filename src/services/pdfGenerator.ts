@@ -1,7 +1,7 @@
 
 import jsPDF from 'jspdf';
 import { Prescription, Patient, Medicine } from '@/types';
-import { getMedicineByIdSync } from '@/utils/storage';
+import { api } from '@/services/apiService';
 
 export class PDFGenerator {
   private static readonly PAGE_HEIGHT = 842; // A4 em pontos
@@ -21,14 +21,14 @@ export class PDFGenerator {
     // Verificar se precisa de múltiplas páginas
     const medicineGroups = this.groupMedicinesByPage(prescription.medicamentos);
     
-    medicineGroups.forEach((group, groupIndex) => {
+    for (const [groupIndex, group] of medicineGroups.entries()) {
       if (groupIndex > 0) {
         doc.addPage();
         this.addHeader(doc);
         this.addContinuationNote(doc, patient.nome);
       }
-      this.addMedicines(doc, group, groupIndex > 0 ? 0 : 220);
-    });
+      await this.addMedicines(doc, group, groupIndex > 0 ? 0 : 220);
+    }
     
     if (prescription.observacoes) {
       this.addObservations(doc, prescription.observacoes);
@@ -45,7 +45,7 @@ export class PDFGenerator {
   ): Promise<Blob> {
     const doc = new jsPDF('p', 'pt', 'a4');
     
-    prescriptions.forEach((prescription, index) => {
+    for (const [index, prescription] of prescriptions.entries()) {
       if (index > 0) doc.addPage();
       
       this.addHeader(doc);
@@ -54,21 +54,21 @@ export class PDFGenerator {
       
       // Lógica de paginação para medicamentos
       const medicineGroups = this.groupMedicinesByPage(prescription.medicamentos);
-      medicineGroups.forEach((group, groupIndex) => {
+      for (const [groupIndex, group] of medicineGroups.entries()) {
         if (groupIndex > 0) {
           doc.addPage();
           this.addHeader(doc);
           this.addContinuationNote(doc, patient.nome);
         }
-        this.addMedicines(doc, group, groupIndex > 0 ? 160 : 220);
-      });
+        await this.addMedicines(doc, group, groupIndex > 0 ? 160 : 220);
+      }
       
       if (prescription.observacoes) {
         this.addObservations(doc, prescription.observacoes);
       }
       
       this.addFooter(doc, prescription.data);
-    });
+    }
     
     return doc.output('blob');
   }
@@ -132,7 +132,7 @@ export class PDFGenerator {
     // Data será adicionada no rodapé conforme template oficial
   }
 
-  private static addMedicines(doc: jsPDF, medicines: any[], startY: number = 180): void {
+  private static async addMedicines(doc: jsPDF, medicines: any[], startY: number = 180): Promise<void> {
     let yPosition = startY;
     
     doc.setFontSize(12);
@@ -140,25 +140,29 @@ export class PDFGenerator {
     doc.text('Medicamentos:', 40, yPosition);
     yPosition += 20;
     
-    medicines.forEach((medicine, index) => {
-      const medicineData = getMedicineByIdSync(medicine.medicamentoId);
-      if (medicineData) {
-        doc.setFont('helvetica', 'normal');
-        
-        // Numeração + Nome do medicamento
-        const medicineText = `${index + 1}. ${medicineData.nome} ${medicineData.dosagem} - ${medicineData.apresentacao}`;
-        doc.text(medicineText, 40, yPosition);
-        yPosition += 15;
-        
-        // Posologia (se houver)
-        if (medicine.posologia && medicine.posologia.trim()) {
-          doc.text(`   Posologia: ${medicine.posologia}`, 40, yPosition);
+    for (const [index, medicine] of medicines.entries()) {
+      try {
+        const medicineData = await api.getMedicineById(medicine.medicamentoId);
+        if (medicineData) {
+          doc.setFont('helvetica', 'normal');
+          
+          // Numeração + Nome do medicamento
+          const medicineText = `${index + 1}. ${medicineData.nome} ${medicineData.dosagem} - ${medicineData.apresentacao}`;
+          doc.text(medicineText, 40, yPosition);
           yPosition += 15;
+          
+          // Posologia (se houver)
+          if (medicine.posologia && medicine.posologia.trim()) {
+            doc.text(`   Posologia: ${medicine.posologia}`, 40, yPosition);
+            yPosition += 15;
+          }
+          
+          yPosition += 5; // Espaço entre medicamentos
         }
-        
-        yPosition += 5; // Espaço entre medicamentos
+      } catch (error) {
+        console.error('Erro ao buscar medicamento:', error);
       }
-    });
+    }
   }
 
   private static addObservations(doc: jsPDF, observations: string): void {

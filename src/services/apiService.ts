@@ -5,7 +5,7 @@
 
 import { Patient, Medicine, Prescription, MultiplePrescriptionsData } from '@/types';
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'http://localhost:5001/api';
 
 // Utilitário para requisições API
 const apiRequest = async (endpoint: string, options: RequestInit = {}): Promise<any> => {
